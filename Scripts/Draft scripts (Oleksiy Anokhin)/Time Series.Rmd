@@ -1,0 +1,68 @@
+---
+title: "Time series"
+author: "Oleksiy Anokhin"
+date: "6/21/2020"
+output: html_document
+---
+
+```{r, message = FALSE, warning = FALSE}
+# Install packages
+library(tidyverse)
+library(prophet)
+library(lubridate)
+library(tidyr)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Read data
+ts_data <- readRDS("taxi_data.rds")
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Check data
+head(ts_data)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Separate data
+ts_data <- ts_data %>% separate(`Start Date`, c('Start Date', 'Start Time'), sep = ' ', extra = 'merge') %>% 
+                       separate(`End Date`, c('End Date', 'End Time'), sep = ' ', extra = 'merge')
+
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Check data
+head(ts_data)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Check data
+ts_data$`Start Date` <- as.POSIXct(ts_data$`Start Date`, format = "%a %b %d")
+```
+
+
+
+strptime('2016-11-01T00:15:00.000Z', '%Y-%m-%dT%H:%M:%OSZ')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

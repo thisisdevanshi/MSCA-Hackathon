@@ -1,0 +1,102 @@
+---
+title: "Logistic Regression"
+author: "Devanshi Verma"
+date: "6/20/2020"
+output: html_document
+---
+
+```{r, message = FALSE, warning = FALSE}
+#loading the libraries
+library(pryr)
+library(tidyverse)
+library(ROCR)
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+#loading the data
+data<-readRDS('/Users/devanshiverma/Desktop/MSCA_Hackathon/Data/taxi_data_devanshi.rds')
+head(data)
+dim(data)
+names(data)
+#removing the NA
+data <- na.omit(data)
+dim(data)
+names(data)
+```
+```{r, message = FALSE, warning = FALSE}
+#creating flags
+#one-hot encoding to divide into cash and non-cash where 1= Cash and 0=Non-Cash
+data<-data  %>% mutate(Payment_Flag=ifelse(`Payment Type` == 'Cash',1,0) )
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+#Splitting the model into train(70%) and test(30%)
+set.seed(12252871)
+sample.size <- floor(0.70*nrow(data))
+train.samples<-sample.int(n=nrow(data), size = sample.size)
+train.data<-data[train.samples,]
+test.data<-data[-train.samples,]
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+#Using Logistic Regression to predict tipping 
+#Full Model
+logistic.model.full <- glm(Tip_result ~ `Trip Seconds` + `Trip Miles` + Fare + Tolls+Payment_Flag, 
+                      data = train.data, 
+              family = binomial(link = "logit"))
+#Null Model
+logistic.model.null<-glm(Tip_result ~ 1, data = train.data,family = binomial(link = "logit"))
+```
+
+```{r, message = FALSE, warning = FALSE}
+#Variable Selection
+drop1(logistic.model.full)
+logistic.model.reduced<- glm(Tip_result ~ `Trip Seconds` + `Trip Miles` + Fare +Payment_Flag, 
+                           data = train.data, 
+                           family = binomial(link = "logit"))
+drop1(logistic.model.reduced)
+summary(logistic.model.reduced)
+```
+
+```{r, message = FALSE, warning = FALSE}
+#predicting for all 3 models
+pred_reduced<-predict(logistic.model.reduced,newdata=test.data,type='response')
+pred_reduced_values<-cbind(V1=pred_reduced,V2=test.data['Tip_result'])
+pred_full<-predict(logistic.model.full,newdata=test.data,type='response')
+pred_full_values<-cbind(V1=pred_full,V2=test.data['Tip_result'])
+pred_null<-predict(logistic.model.null,newdata=test.data,type='response')
+pred_null_values<-cbind(V1=pred_null,V2=test.data['Tip_result'])
+```
+
+```{r, message = FALSE, warning = FALSE}
+list(
+  Reduced_Model = table(pred_reduced_values$V1 > 0.5, pred_reduced_values$Tip_result) %>% prop.table() %>% round(3),
+  Null_Model = table(pred_null_values$V1 > 0.5, pred_null_values$Tip_result) %>% prop.table() %>% round(3)
+)
+```
+
+```{r, message = FALSE, warning = FALSE}
+#plotting the ROC Curve
+par(mfrow=c(1, 2))
+prediction(pred_reduced_values$V1, pred_reduced_values$Tip_result) %>%
+  performance(measure = "tpr", x.measure = "fpr") %>%
+  plot()
+
+prediction(pred_null_values$V1, pred_null_values$Tip_result) %>%
+  performance(measure = "tpr", x.measure = "fpr") %>%
+  plot()
+```
+
+```{r, message = FALSE, warning = FALSE}
+#Calculating AUC
+prediction(pred_reduced_values$V1, pred_reduced_values$Tip_result) %>%
+  performance(measure = "auc") %>%
+  .@y.values
+
+prediction(pred_null_values$V1, pred_null_values$Tip_result) %>%
+  performance(measure = "auc") %>%
+  .@y.values
+```

@@ -1,0 +1,88 @@
+---
+title: "Taxi analysis (MScA Hackathon)"
+author: "Oleksiy Anokhin"
+date: "6/15/2020"
+output: html_document
+---
+
+```{r, message = FALSE, warning = FALSE}
+# Install packages
+library(tidyverse)
+library(lubridate)
+library(tidyr)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Read data from December 2019 - June 2020
+taxi_2020 <- read_csv("Taxi_Trips_Dec2019-Present.csv")
+head(taxi_2020)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# View the dataset in the RStudio
+View(taxi_2020)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Check names of the dataframe
+names(taxi_2020)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Drop columns with useless or duplicated information
+taxi_2020 <- taxi_2020 %>% select(-c(`Trip ID`, `Taxi ID`, `Pickup Centroid Location`, `Dropoff Centroid  Location`))
+```
+
+```{r, message = FALSE, warning = FALSE}
+# View the updated dataset in the RStudio
+View(taxi_2020)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Split data Trip Start Timestamp
+taxi_2020_test <- tidyr::separate(taxi_2020, `Trip Start Timestamp`, c('Start Date', 'Start Time'), 
+                       sep = ' ', extra = 'merge')
+head(taxi_2020_test)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Split data Trip end Timestamp
+taxi_2020_test <- tidyr::separate(taxi_2020_test, `Trip End Timestamp`, c('End Date', 'End Time'), 
+                       sep = ' ', extra = 'merge')
+head(taxi_2020_test)
+```
+
+
+
+
+```{r, message = FALSE, warning = FALSE}
+# Convert characters to dates
+taxi_2020_test$`Start Date` <- mdy(taxi_2020_test$`Start Date`)
+class(taxi_2020_test$`Start Date`)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Convert characters to dates
+taxi_2020_test$`End Date` <- mdy(taxi_2020_test$`End Date`)
+class(taxi_2020_test$`End Date`)
+```
+
+```{r, message = FALSE, warning = FALSE}
+Encoding(taxi_2020_test$`End Date`) <- "UTF-8"
+iconv(taxi_2020_test$`End Date`, "UTF-8", "UTF-8", sub = '')
+```
+
+
+
+```{r, message = FALSE, warning = FALSE}
+write.csv(taxi_2020_test, "taxi_2020.csv", row.names = FALSE)
+```
+
+
+
+
+
+
+
+
+

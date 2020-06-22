@@ -1,0 +1,124 @@
+---
+title: "Logistic Regression 2"
+author: "Oleksiy Anokhin"
+date: "6/20/2020"
+output: html_document
+---
+
+```{r, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(caret)
+library(modelr)     
+library(broom) 
+library(ROCR)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Read data as .rds
+taxi_data <- readRDS("taxi_data2.rds")
+```
+
+```{r, message = FALSE, warning = FALSE}
+# View basic information
+head(taxi_data)
+dim(taxi_data) # 4137294 rows, 6 columns
+names(taxi_data)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Calculate all NAs
+taxi_data %>% summarise_all(funs(sum(is.na(.))))
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Drop all NAs
+taxi_data_clean <- taxi_data %>% drop_na()
+dim(taxi_data_clean) # 4135918  
+# AS you can see, we lost only 1400 rows approximately.
+```
+```{r, message = FALSE, warning = FALSE}
+# Double check all NAs
+taxi_data_clean %>% summarise_all(funs(sum(is.na(.))))
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Compare the amount of 1 and 0
+table(taxi_data_clean$Tip_result)
+# AS you can see, we have a descent situation.
+# 1869644 gave tips, 2266274 did not give tips. The ratio is about 40%/60%
+```
+```{r, message = FALSE, warning = FALSE}
+sample <- sample(c(TRUE, FALSE), nrow(taxi_data_clean), replace = T, prob = c(0.6, 0.4))
+train <- taxi_data_clean[sample, ]
+test <- taxi_data_clean[!sample, ]
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Check results
+head(train)
+dim(train) # 2481412
+head(test)
+dim(test) # 1654506
+```
+```{r, message = FALSE, warning = FALSE}
+# Create a model
+# model1 <- glm(Tip_result ~ `Trip Seconds` + `Trip Miles` + Fare + Company, data = train, family = binomial(link = "logit"))
+# summary(model1)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Create a model
+model2 <- glm(Tip_result ~ `Trip Seconds` + `Trip Miles` + Fare, data = train, family = binomial(link = "logit"))
+summary(model2)
+```
+```{r, message = FALSE, warning = FALSE}
+# Tidy results
+tidy(model2)
+```
+```{r, message = FALSE, warning = FALSE}
+# Interpret
+exp(coef(model2))
+```
+```{r, message = FALSE, warning = FALSE}
+# Evaluate the variables
+caret::varImp(model2)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Predict
+new.df <- tibble(`Trip Miles` = 20, Fare = 30, `Trip Seconds` = 1200)
+predict(model2, new.df, type = "response")
+```
+```{r, message = FALSE, warning = FALSE}
+# Create a model
+model3 <- glm(Tip_result ~ `Trip Seconds` + `Trip Miles`, data = train, family = binomial(link = "logit"))
+summary(model3)
+```
+```{r, message = FALSE, warning = FALSE}
+# ANOVA
+anova(model2, model3, test = "Chisq")
+```
+```{r, message = FALSE, warning = FALSE}
+test.predicted.m2 <- predict(model2, newdata = test, type = "response")
+test.predicted.m3 <- predict(model3, newdata = test, type = "response")
+```
+
+```{r, message = FALSE, warning = FALSE}
+list(
+  model2 = table(test$Tip_result, test.predicted.m2 > 0.5) %>% prop.table() %>% round(3),
+  model3 = table(test$Tip_result, test.predicted.m3 > 0.5) %>% prop.table() %>% round(3)
+)
+```
+```{r, message = FALSE, warning = FALSE}
+par(mfrow=c(1, 2))
+
+prediction(test.predicted.m2, test$Tip_result) %>%
+  performance(measure = "tpr", x.measure = "fpr") %>%
+  plot()
+
+prediction(test.predicted.m3, test$Tip_result) %>%
+  performance(measure = "tpr", x.measure = "fpr") %>%
+  plot()
+```
+
+

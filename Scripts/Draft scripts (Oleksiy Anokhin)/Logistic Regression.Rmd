@@ -1,0 +1,122 @@
+---
+title: "Logistic Regression"
+author: "Oleksiy Anokhin"
+date: "6/20/2020"
+output: html_document
+---
+
+### Devanshi's code
+
+```{r, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Read data
+taxi_data <- read_csv("Taxi_Trips_Dec2019-Present.csv")
+```
+
+```{r, message = FALSE, warning = FALSE}
+names(taxi_data)
+```
+
+```{r, message = FALSE, warning = FALSE}
+devanshi <- taxi_data %>% select(`Trip Seconds`, `Trip Miles`, Fare, Tips, Tolls, `Payment Type`)
+head(devanshi)
+
+devanshi <- devanshi %>% mutate(Tip_result = case_when(Tips > 0 ~ 1, Tips == 0 ~ 0))
+head(devanshi)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Save data as .rds
+saveRDS(devanshi, file = "taxi_data_devanshi.rds")
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+# Save data as .rds
+# saveRDS(taxi_data2, file = "taxi_data2.rds")
+```
+
+```{r, message = FALSE, warning = FALSE}
+# View basic information
+head(taxi_data)
+dim(taxi_data) # 4137294 rows, 23 columns
+names(taxi_data)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Select relevant columns
+taxi_data2 <- taxi_data %>% select(`Trip Seconds`, `Trip Miles`, `Fare`, `Company`, `Tips`)
+head(taxi_data2)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Create a new column (boolean with 1 and 0)
+taxi_data2 <- taxi_data2 %>% mutate(Tip_result = case_when(Tips > 0 ~ 1, Tips == 0 ~ 0))
+head(taxi_data2, 10)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Compare the amount of 1 and 0
+table(taxi_data2$Tip_result)
+# AS you can see, we have a descent situation.
+# 1869740 gave tips, 2267070 did not give tips. The ratio is about 40%/60%
+```
+```{r, message = FALSE, warning = FALSE}
+# Create separate dataframes
+tips_ones <- taxi_data2[which(taxi_data2$Tip_result == 1), ]  # all 1's
+tips_zeros <- taxi_data2[which(taxi_data2$Tip_result == 0), ]  # all 0's
+head(tips_ones)
+head(tips_zeros)
+```
+```{r, message = FALSE, warning = FALSE}
+# Split data into train and test
+# set.seed(100)  # for repeatability of samples
+tips_ones_training_rows <- sample(1:nrow(tips_ones), 0.7 * nrow(tips_ones))  # 1's for training
+tips_zeros_training_rows <- sample(1:nrow(tips_zeros), 0.7 * nrow(tips_ones))  # 0's for training. Pick as many 0's as 1's
+training_ones <- tips_ones[tips_ones_training_rows, ]  
+training_zeros <- tips_zeros[tips_zeros_training_rows, ]
+trainingData <- rbind(training_ones, training_zeros)  # row bind the 1's and 0's 
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Create Test Data
+test_ones <- tips_ones[-tips_ones_training_rows, ]
+test_zeros <- tips_zeros[-tips_zeros_training_rows, ]
+testData <- rbind(test_ones, test_zeros)  # row bind the 1's and 0's 
+```
+
+```{r, message = FALSE, warning = FALSE}
+# Save data as RDS
+saveRDS(object, file = "my_data.rds")
+```
+
+
+
+
+
+```{r, message = FALSE, warning = FALSE}
+# Create a model
+model1 <- glm(Tip_result ~ `Trip Seconds` + `Trip Miles` + Fare + Company, data = trainingData, family = binomial(link="logit"))
+summary(model1)
+```
+
+```{r, message = FALSE, warning = FALSE}
+# predicted <- plogis(predict(logitMod, testData))  # predicted scores
+# or
+# predicted <- predict(logitMod, testData, type="response")  # predicted scores
+```
+
+
+
+tips, Trip.Seconds, Trip.Miles, Fare, 
+                    Tolls, payment_type
+
+
+
+
+
+
+
